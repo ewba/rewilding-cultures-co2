@@ -215,7 +215,7 @@ def prepCalc(start, end, mode, fuel, passengers):
 
 # prepare a file to save results in and also to skip calculations if done
 outHeader = [ "Event", "Name", "From", "To", "Mode", "Fuel", "People", "CO2" ]
-# sigh, ensure it exists, since python can't open it for reading otherwise
+# sigh, ensure it exists, since python can't open it for appending otherwise
 open(resultsFile, 'a').close()
 with open(resultsFile, 'r') as outFile:
     resultStr = outFile.read()
@@ -254,7 +254,7 @@ with open(inputCSV, newline='') as inFile, open(resultsFile, 'a', newline='') as
         print("Emissions {} kg from {}".format(emissions, row["Name"]))
         total = total + emissions
         fakeWait(1) # just to be nice to the server
-        break
+        # break
     print("Total emissions: {} kg from {}+ people".format(total, rows - 1))
 
 if quitter:
