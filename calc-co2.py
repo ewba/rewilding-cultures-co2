@@ -1,5 +1,6 @@
 #!/bin/python
 import csv
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -11,12 +12,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 # pip install selenium
 # debian et co with externally managed eggs:
 #    sudo apt install python3-selenium firefox-esr-geckodriver
-inputCSV = ""
 
-if not inputCSV:
-    print("Make sure to set the input data file path! Bailing out.")
-    import sys
+if len(sys.argv) == 1:
+    print("Make sure to pass the input data file path! Bailing out.")
     sys.exit(1)
+inputCSV = sys.argv[1]
 
 browser = webdriver.Firefox()
 
