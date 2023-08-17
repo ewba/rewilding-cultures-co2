@@ -1,12 +1,10 @@
 #!/bin/python
 import csv
-import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support.ui import Select
 
 # DEPENDENCY INFO:
 # install geckodriver or chromedriver
@@ -116,7 +114,7 @@ def runTest(start, end, mode, fuel):
         scaleFactor = 0.5
     elif mode == "Bike" or mode == "Walk":
         return 0
-    else:  
+    else:
         print("unknown mode! " + mode)
         return -100000
 
