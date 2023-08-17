@@ -16,6 +16,15 @@ from selenium.webdriver.support.wait import WebDriverWait
 if len(sys.argv) == 1:
     print("Make sure to pass the input data file path! Bailing out.")
     sys.exit(1)
+
+args = sys.argv
+quitter = True
+for arg in args:
+    if arg == "-n":
+        quitter = False
+        del sys.argv[sys.argv.index(arg)]
+        break
+
 inputCSV = sys.argv[1]
 
 browser = webdriver.Firefox()
@@ -206,4 +215,5 @@ with open(inputCSV, newline='') as file:
         break
     print("Total emissions: {} kg from {}+ people".format(total, rows - 1))
 
-browser.quit()
+if quitter:
+    browser.quit()
