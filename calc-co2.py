@@ -252,6 +252,7 @@ with open(inputCSV, newline='') as inFile, open(resultsFile, 'a', newline='') as
         rows = rows + 1
         emissions = parseEntry(row, writer)
         print("Emissions {} kg from {}".format(emissions, row["Name"]))
+        outFile.flush()
         total = total + emissions
         fakeWait(1) # just to be nice to the server
         # break
