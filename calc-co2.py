@@ -51,8 +51,9 @@ def parseEntry(row):
         end = row["End" + str(i + 1)] + ","
         mode = row["Mode" + str(i + 1)]
         fuel = row["Fuel" + str(i + 1)]
-        passengers = int(row["Passengers" + str(i + 1)])
-        if not passengers:
+        try:
+            passengers = int(row["Passengers" + str(i + 1)])
+        except:
             passengers = 1
         #start = "Tolmin,"
         #end = "London,"
