@@ -15,6 +15,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 if len(sys.argv) == 1:
     print("Make sure to pass the input data file path! Bailing out.")
+    print("calc-co2.py [-n] inputFile [resultFile] [eventName]")
     sys.exit(1)
 
 args = sys.argv
@@ -26,6 +27,14 @@ for arg in args:
         break
 
 inputCSV = sys.argv[1]
+if len(sys.argv) > 2:
+    resultsFile = sys.argv[2]
+else:
+    resultsFile = "results.csv"
+if len(sys.argv) > 3:
+    event = sys.argv[3]
+else:
+    event = ""
 
 browser = webdriver.Firefox()
 
@@ -42,7 +51,7 @@ def fakeWait(delay = 5):
     except:
         pass
 
-def parseEntry(row):
+def parseEntry(row, writer):
     legs = int(row["Legs"])
     total = 0
     for i in range(legs):
@@ -59,8 +68,9 @@ def parseEntry(row):
         #end = "London,"
         #mode = "Bus"
         # fuel = "Electricity"
-        total = total + prepCalc(start, end, mode, fuel, passengers)
-        # break
+        legEmissions = prepCalc(start, end, mode, fuel, passengers)
+        writer.writerow({ 'Event': row["Event"], 'Name': row["Name"], 'From': start, 'To': end, 'Mode': mode, 'Fuel': fuel, 'People': passengers, 'CO2': legEmissions })
+        total = total + legEmissions
     return total
 
 def runTest(start, end, mode, fuel):
@@ -199,8 +209,24 @@ def prepCalc(start, end, mode, fuel, passengers):
     print(str(emissions) + " kg")
     return emissions
 
-with open(inputCSV, newline='') as file:
-    reader = csv.DictReader(file, header)
+#######################################################################
+# main startup
+#######################################################################
+
+# prepare a file to save results in and also to skip calculations if done
+outHeader = [ "Event", "Name", "From", "To", "Mode", "Fuel", "People", "CO2" ]
+# sigh, ensure it exists, since python can't open it for reading otherwise
+open(resultsFile, 'a').close()
+with open(resultsFile, 'r') as outFile:
+    resultStr = outFile.read()
+
+rc = 0
+with open(inputCSV, newline='') as inFile, open(resultsFile, 'a', newline='') as outFile:
+    reader = csv.DictReader(inFile, header)
+    writer = csv.DictWriter(outFile, fieldnames=outHeader)
+    if not resultStr:
+        writer.writeheader()
+
     rows = 0
     total = 0
     for row in reader:
@@ -208,8 +234,23 @@ with open(inputCSV, newline='') as file:
             # skip bad header
             rows = 1
             continue
+
+        # skip non-matching events
+        if event and row["Event"] != event:
+            continue
+
+        # is the result already calculated?
+        mentions = resultStr.count(row["Name"])
+        if mentions == int(row["Legs"]):
+            continue
+        elif mentions > 0 and mentions <= int(row["Legs"]):
+            print("ERROR: partial results detected for {}, bailing out.".format(row["Name"]))
+            print("Perhaps there are several input entries?")
+            rc = 1
+            break
+
         rows = rows + 1
-        emissions = parseEntry(row)
+        emissions = parseEntry(row, writer)
         print("Emissions {} kg from {}".format(emissions, row["Name"]))
         total = total + emissions
         fakeWait(1) # just to be nice to the server
@@ -218,3 +259,4 @@ with open(inputCSV, newline='') as file:
 
 if quitter:
     browser.quit()
+sys.exit(rc)
