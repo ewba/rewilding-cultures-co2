@@ -69,7 +69,7 @@ def parseEntry(row, writer):
         #mode = "Bus"
         # fuel = "Electricity"
         legEmissions = prepCalc(start, end, mode, fuel, passengers)
-        writer.writerow({ 'Event': row["Event"], 'Name': row["Name"], 'From': start, 'To': end, 'Mode': mode, 'Fuel': fuel, 'People': passengers, 'CO2': legEmissions })
+        writer.writerow({ 'Event': row["Event"], 'Name': row["Name"], 'From': start[:-1], 'To': end[:-1], 'Mode': mode, 'Fuel': fuel, 'People': passengers, 'CO2': legEmissions })
         total = total + legEmissions
     return total
 
