@@ -12,6 +12,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 # pip install selenium
 # debian et co with externally managed eggs:
 #    sudo apt install python3-selenium firefox-esr-geckodriver
+# TODO: add any diagnostics for duplicates etc.? Running it again is a good way to catch them
 
 if len(sys.argv) == 1:
     print("Make sure to pass the input data file path! Bailing out.")
@@ -54,6 +55,7 @@ def fakeWait(delay = 5):
 def parseEntry(row, writer):
     legs = int(row["Legs"])
     total = 0
+    kms = 0
     for i in range(legs):
         # append commas to avoid selecting common rooted names that sort earlier for short inputs
         start = row["End" + str(i)] + ","
@@ -68,10 +70,11 @@ def parseEntry(row, writer):
         #end = "London,"
         #mode = "Bus"
         # fuel = "Electricity"
-        legEmissions = prepCalc(start, end, mode, fuel, passengers)
-        writer.writerow({ 'Event': row["Event"], 'Name': row["Name"], 'From': start[:-1], 'To': end[:-1], 'Mode': mode, 'Fuel': fuel, 'People': passengers, 'CO2': legEmissions })
+        legEmissions, km = prepCalc(start, end, mode, fuel, passengers)
+        writer.writerow({ 'Event': row["Event"], 'Name': row["Name"], 'From': start[:-1], 'To': end[:-1], 'Mode': mode, 'Fuel': fuel, 'People': passengers, 'CO2': legEmissions, 'Kilometers': km })
         total = total + legEmissions
-    return total
+        kms = kms + km
+    return total, kms
 
 def runTest(start, end, mode, fuel):
     browser.get("https://travelandclimate.org/")
@@ -112,6 +115,7 @@ def runTest(start, end, mode, fuel):
     waitForVisible(30, (By.XPATH, button))
     # NOTE: button order can be inconsistent, so we target by text
     scaleFactor = 1
+    originalMode = mode
     if mode == "Car" and fuel == "Electricity":
         # NOTE: uses nordic electricity numbers if appropriate
         button = "//span[contains(@class, 'column-sub-title')]/div[text()='El.car']"
@@ -127,31 +131,37 @@ def runTest(start, end, mode, fuel):
         button = "//span[contains(@class, 'column-sub-title')]/div[text()='Air']"
     elif mode == "Ferry":
         # taken into account internally under Car
-        return 0
+        return 0, 0
     elif mode == "Motorbike":
         # NOTE: compare average fuel consumption is tricky, after some scouring
         # we take half of the car value
         scaleFactor = 0.5
     elif mode == "Bike" or mode == "Walk":
-        return 0
+        mode = "Car"
     else:
         print("unknown mode! " + mode)
         return -100000
 
     # actually pick ride type
-    # import pdb; pdb.set_trace()
     browser.find_element(By.XPATH, button).click()
     otherFuels = [ "Petrol", "Natural gas", "Mix of natural and biogas", "Biogas", "Ethanol", "Biodiesel" ]
+
+    # extra steps to get length of leg and pick fuel
+    # NOTE: there could be more than one to pick (eg. with interim ferries or for airport access)
+
+    # click again to trigger the overlay, but the button path changed ...
+    browser.find_element(By.XPATH, button).click()
+
+    # sigh, of course the correct way to do it doesn't work
+    #waitForVisible(20, (By.CLASS_NAME, "to-km"))
+    fakeWait(1)
+    els = browser.find_elements(By.CLASS_NAME, "to-km")
+    km = sum(map(lambda el: int(el.text.split()[0]) if el.is_displayed() else 0, els))
+
     if mode == "Car" and fuel in otherFuels:
         # translate to actual values
         otherFuels[2] = "Mix natural/biogas"
         otherFuels[5] = "Biodiesel 100%"
-
-        # extra steps to pick fuel
-        # NOTE: there could be more than one to pick (eg. with interim ferries)
-        # i = 1
-        # click again to trigger the overlay, but the button path changed ...
-        browser.find_element(By.XPATH, button).click()
 
         # pick fuel form(s)
         els = browser.find_elements(By.XPATH, "//div[contains(@class, 'field--name-field-drivmedel')]/div/div")
@@ -187,8 +197,8 @@ def runTest(start, end, mode, fuel):
             # refetch list, since the DOM changed
             els = browser.find_elements(By.XPATH, "//div[contains(@class, 'field--name-field-drivmedel')]/div/div")
 
-        # close by reclicking on the main element (x to close isn't interactable)
-        browser.find_element(By.XPATH, "//div[starts-with(@id, 'edit-field-resvagar-wrapper')]").click()
+    # close by reclicking on the main element (x to close isn't interactable)
+    browser.find_element(By.XPATH, "//div[starts-with(@id, 'edit-field-resvagar-wrapper')]").click()
 
     # choose random useless accommodation, so we can trigger the final calculation
     browser.find_elements(By.XPATH, "//div[@class='accommodation-footer']/div[1]")[0].click()
@@ -199,22 +209,24 @@ def runTest(start, end, mode, fuel):
     # grab and clean up the result
     emissions = browser.find_element(By.CSS_SELECTOR, ".total-emissions").text
     kg = round(int(emissions.split()[0]) * scaleFactor)
-    return kg
+    if originalMode == "Bike" or originalMode == "Walk":
+        km = 0
+    return (kg, km)
 
 def prepCalc(start, end, mode, fuel, passengers):
     print("From {} to {} with {} ({}) and {} people: ".format(start, end, mode, fuel, passengers), end='')
-    emissions = runTest(start, end, mode, fuel)
+    emissions, km = runTest(start, end, mode, fuel)
 
     emissions = round(emissions / passengers)
-    print(str(emissions) + " kg")
-    return emissions
+    print("{} kg from travelling {} km".format(emissions, km))
+    return (emissions, km)
 
 #######################################################################
 # main startup
 #######################################################################
 
 # prepare a file to save results in and also to skip calculations if done
-outHeader = [ "Event", "Name", "From", "To", "Mode", "Fuel", "People", "CO2" ]
+outHeader = [ "Event", "Name", "From", "To", "Mode", "Fuel", "People", "CO2", "Kilometers" ]
 # sigh, ensure it exists, since python can't open it for appending otherwise
 open(resultsFile, 'a').close()
 with open(resultsFile, 'r') as outFile:
@@ -229,6 +241,7 @@ with open(inputCSV, newline='') as inFile, open(resultsFile, 'a', newline='') as
 
     rows = 0
     total = 0
+    kms = 0
     for row in reader:
         if rows == 0:
             # skip bad header
@@ -250,13 +263,14 @@ with open(inputCSV, newline='') as inFile, open(resultsFile, 'a', newline='') as
             break
 
         rows = rows + 1
-        emissions = parseEntry(row, writer)
-        print("Emissions {} kg from {}".format(emissions, row["Name"]))
+        emissions, km = parseEntry(row, writer)
+        print("Emissions {} kg from {} travelling {} km".format(emissions, row["Name"], km))
         outFile.flush()
         total = total + emissions
+        kms = kms + km
         fakeWait(1) # just to be nice to the server
         # break
-    print("Total emissions: {} kg from {}+ people".format(total, rows - 1))
+    print("Total emissions: {} kg from {}+ people travelling {} km".format(total, rows - 1, kms))
 
 if quitter:
     browser.quit()
