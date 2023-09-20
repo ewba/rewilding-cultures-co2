@@ -43,6 +43,8 @@ browser = webdriver.Firefox()
 # rewrite header for easier work and to avoid skipping duplicates
 header = ['Submitted', 'Name', 'Event', 'E-mail', 'Legs', 'End0', 'End1', 'Passengers1', 'End2', 'Passengers2', 'End3', 'Passengers3', 'End4', 'Passengers4', 'End5', 'Passengers5', 'End6', 'Passengers6', 'End7', 'Passengers7', 'End8', 'Passengers8', 'End9', 'Passengers9', 'End10', 'Passengers10', 'Mode1', 'Fuel1', 'Mode2', 'Fuel2', 'Mode3', 'Fuel3', 'Mode4', 'Fuel4', 'Mode5', 'Fuel5', 'Mode6', 'Fuel6', 'Mode7', 'Fuel7', 'Mode8', 'Fuel8', 'Mode9', 'Fuel9', 'Mode10', 'Fuel10']
 
+errorValue = -10000000000
+
 def waitForVisible(timeout, el):
     WebDriverWait(browser, timeout).until(expected_conditions.visibility_of_element_located(el))
 
@@ -141,7 +143,7 @@ def runTest(start, end, mode, fuel):
         mode = "Car"
     else:
         print("unknown mode! " + mode)
-        return -100000
+        return errorValue, errorValue
 
     # actually pick ride type
     browser.find_element(By.XPATH, button).click()
@@ -219,7 +221,7 @@ def prepCalc(start, end, mode, fuel, passengers):
     try:
         emissions, km = runTest(start, end, mode, fuel)
     except:
-        emissions = km = -10000000000
+        emissions = km = errorValue
 
     emissions = round(emissions / passengers)
     print("{} kg from travelling {} km".format(emissions, km))
