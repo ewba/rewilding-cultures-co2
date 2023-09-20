@@ -12,6 +12,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 # pip install selenium
 # debian et co with externally managed eggs:
 #    sudo apt install python3-selenium firefox-esr-geckodriver
+# TODO: add caching, since the final legs are often likely to be the same?
 # TODO: add any diagnostics for duplicates etc.? Running it again is a good way to catch them
 
 if len(sys.argv) == 1:
@@ -215,7 +216,10 @@ def runTest(start, end, mode, fuel):
 
 def prepCalc(start, end, mode, fuel, passengers):
     print("From {} to {} with {} ({}) and {} people: ".format(start, end, mode, fuel, passengers), end='')
-    emissions, km = runTest(start, end, mode, fuel)
+    try:
+        emissions, km = runTest(start, end, mode, fuel)
+    except:
+        emissions = km = -10000000000
 
     emissions = round(emissions / passengers)
     print("{} kg from travelling {} km".format(emissions, km))
