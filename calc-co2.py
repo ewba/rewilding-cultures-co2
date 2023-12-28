@@ -17,7 +17,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 if len(sys.argv) == 1:
     print("Make sure to pass the input data file path! Bailing out.")
-    print("calc-co2.py [-n] inputFile [resultFile] [eventName]")
+    print("calc-co2.py [-n] inputFile [resultFile [eventName]]")
     sys.exit(1)
 
 args = sys.argv
