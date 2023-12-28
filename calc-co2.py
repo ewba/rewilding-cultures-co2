@@ -48,7 +48,7 @@ errorValue = -10000000000
 def waitForVisible(timeout, el):
     WebDriverWait(browser, timeout).until(expected_conditions.visibility_of_element_located(el))
 
-# fake wait hack
+# fake wait hack (for some reason implicit wait did not work)
 def fakeWait(delay = 5):
     try:
         waitForVisible(delay, (By.XPATH, "//non-existing"))
@@ -134,6 +134,8 @@ def runTest(start, end, mode, fuel):
         button = "//span[contains(@class, 'column-sub-title')]/div[text()='Air']"
     elif mode == "Ferry":
         # taken into account internally under Car
+        # FIXME: unless there's no other option, then there's an independent ferry button
+        # hit pe. with Helsinki - Tallinn
         return 0, 0
     elif mode == "Motorbike":
         # NOTE: compare average fuel consumption is tricky, after some scouring
