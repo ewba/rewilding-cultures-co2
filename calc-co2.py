@@ -9,9 +9,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 # DEPENDENCY INFO:
 # install geckodriver or chromedriver
-# pip install selenium
+#    pip install selenium
 # debian et co with externally managed eggs:
 #    sudo apt install python3-selenium firefox-esr-geckodriver
+# if you're not using the snap version of a browser, download the driver manually and
+# put it into your $PATH; you might also need to extract the selenium-manager
+# of your platform from an official release of python3-selenium
 # TODO: add caching, since the final legs are often likely to be the same?
 # TODO: add any diagnostics for duplicates etc.? Running it again is a good way to catch them
 
