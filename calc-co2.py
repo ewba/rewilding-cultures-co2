@@ -158,6 +158,7 @@ def runTest(start, end, mode, fuel):
     if mode == "Plane":
         pass
         #import pdb; pdb.set_trace()
+    fakeWait(2)
     waitForVisible(10, (By.CLASS_NAME, button))
     ride = browser.find_element(By.CLASS_NAME, button)
     if ride:
@@ -171,7 +172,7 @@ def runTest(start, end, mode, fuel):
 
     # open details column overlay and extract leg distance
     # there can be more than one valid bar (common with buses or if a ferry interrupts cars)
-    fakeWait(1)
+    fakeWait(2)
     waitForVisible(5, (By.CSS_SELECTOR, colSelector))
     #import pdb; pdb.set_trace()
     bars = browser.find_elements(By.CSS_SELECTOR, colSelector)
@@ -181,7 +182,7 @@ def runTest(start, end, mode, fuel):
         if not bar.is_displayed() or "hidden" in bar.get_dom_attribute("class"):
             continue
         ActionChains(browser).move_to_element(bar).perform()
-        fakeWait(1)
+        fakeWait(2)
         # yuck, occasional XPATH failure, so we have to filter manually
         kmEls = bar.find_elements(By.XPATH, "//div/div/div[contains(text(), ' km')]")
         for kmEl in kmEls:
