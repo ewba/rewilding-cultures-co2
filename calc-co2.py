@@ -85,6 +85,9 @@ def parseEntry(row, writer):
     return total, kms
 
 def runTest(start, end, mode, fuel):
+    if start == end:
+        return 0, 0
+
     browser.get("https://travelandclimate.org/")
     assert 'Travel' in browser.title
 
