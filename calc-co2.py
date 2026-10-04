@@ -231,7 +231,8 @@ def prepCalc(start, end, mode, fuel, passengers):
     print("From {} to {} with {} ({}) and {} people: ".format(start, end, mode, fuel, passengers), end='')
     try:
         emissions, km = runTest(start, end, mode, fuel)
-    except:
+    except Exception as e:
+        print(e)
         emissions = km = errorValue
 
     emissions = round(emissions / passengers)
