@@ -97,14 +97,19 @@ def runTest(start, end, mode, fuel):
 
     # set one-way trip
     browser.find_element(By.ID, "ways").click()
+    fakeWait(1)
     browser.find_element(By.CSS_SELECTOR, "#ways > :nth-child(2)").click()
 
     # set start
-    browser.find_element(By.ID, "origin").click()
-    browser.find_element(By.ID, "origin").send_keys(start)
+    origin = browser.find_element(By.ID, "origin")
+    fakeWait(2)
+    origin.click()
+    fakeWait(1)
+    origin.send_keys(start)
     fakeWait(1)
     waitForVisible(10, (By.CSS_SELECTOR, ".pac-item:nth-child(1)"))
     browser.find_element(By.CSS_SELECTOR, ".pac-item:nth-child(1)").click()
+    fakeWait(1)
 
     # set destination
     browser.find_element(By.ID, "destinations.0").click()
@@ -161,7 +166,10 @@ def runTest(start, end, mode, fuel):
     if mode == "Plane":
         pass
         #import pdb; pdb.set_trace()
-    fakeWait(2)
+
+    loader = browser.find_element(By.CLASS_NAME, "backdrop-blur")
+    while loader.is_displayed():
+      fakeWait(1)
     waitForVisible(10, (By.CLASS_NAME, button))
     ride = browser.find_element(By.CLASS_NAME, button)
     if ride:
